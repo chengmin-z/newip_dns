@@ -1,0 +1,6 @@
+# vscode config
+.vscode
+
+# all floder bin
+*/bin/*
+!*/bin/.gitkeep
