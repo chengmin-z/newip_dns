@@ -4,3 +4,4 @@
 # all floder bin
 */bin/*
 !*/bin/.gitkeep
+!*/bin/*.txt
