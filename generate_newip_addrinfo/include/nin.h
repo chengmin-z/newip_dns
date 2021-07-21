@@ -9,6 +9,7 @@
 
 #include <linux/types.h>
 #include <linux/libc-compat.h>
+#include <linux/string.h>
 #include <stdint.h>
 
 #define NIP_8BIT_MAX 0xEF
