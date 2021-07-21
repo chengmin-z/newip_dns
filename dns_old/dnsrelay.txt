@@ -1,0 +1,4 @@
+0.0.0.0 zelnet.ru
+61.135.181.175 sohu
+114.255.40.166 www.bupt.edu.cn
+0.0.0.0 ad4.sina.com.cn
