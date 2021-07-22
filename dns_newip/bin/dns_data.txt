@@ -1,1 +1,4 @@
-daisy.ubuntu.com A a2 d5 21 6c
+daisy.a.com A a2 d5 21 6c 
+daisy.aaaa.com AAAA a2 d5 21 6c a2 d5 21 6c a2 d5 21 6c a2 d5 21 6c
+daisy.nip.com NIP a2 d5 21 6c a2 d5 21 6c 21 6c a2 d5 21 6c a2 d5 21 6c 21 6c a2 d5 21 6c a2 d5 21 6c 21 6c a2 d5 21 6c a2 d5 21 6c 21 6c a2 d5 21 6c a2 d5 21 6c 21 6c
+daisy.null.com NULL 
