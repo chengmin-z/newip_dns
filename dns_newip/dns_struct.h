@@ -15,7 +15,7 @@ enum ANSWER_TYPE {
     ANSWER_TYPE_NULL = 0x0000,
     ANSWER_TYPE_A = 0x0001,
     ANSWER_TYPE_AAAA = 0x001c,
-    ANSWER_TYPE_NIP = 0x0020,
+    ANSWER_TYPE_NIP = 0x0036,
 };
 
 enum ANSWER_CLASS {
@@ -24,6 +24,7 @@ enum ANSWER_CLASS {
 };
 
 enum ANSWER_RDLENGTH {
+    ANSWER_RDLENGTH_NULL = 0x0000,
     ANSWER_RDLENGTH_A = 0x0004,
     ANSWER_RDLENGTH_AAAA = 0x0010,
     ANSWER_RDLENGTH_NIP = 0x0032
@@ -39,6 +40,8 @@ typedef struct dns_header {
 } DNS_Header;
 
 unsigned short convertTypeToRDLen(enum ANSWER_TYPE type);
+
+char *convertTypeToDescription(enum ANSWER_TYPE type);
 
 void editDnsMessageAnswerRRs(char *dnsBuffer, uint16_t data);
 

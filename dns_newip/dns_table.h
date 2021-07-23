@@ -16,6 +16,7 @@ typedef struct dns_table_item {
 typedef struct dns_table {
     int size;
     struct dns_table_item *head;
+    struct dns_table_item *end;
 } DNS_Table;
 
 struct dns_table *initDNSTable();
@@ -27,5 +28,7 @@ struct dns_table_item *findDnsItem(char *domain, struct dns_table *dnsTable);
 int addDNSMessageAnswer(char *dnsBuffer, int size, struct dns_table_item *dnsItem);
 
 unsigned char __hexString2UnsignedChar(char *input);
+
+int __insertDnsTableItem(struct dns_table *table, char *domain, enum ANSWER_TYPE type, unsigned char *data);
 
 #endif

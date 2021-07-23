@@ -21,7 +21,7 @@ typedef struct id_transform_table {
 
 struct id_transform_table *initIDTransTable();
 
-unsigned short insertIDTransTable(struct id_transform_table *table, unsigned short oldID, struct sockaddr_in addr, char *domain);
+struct id_transform_item *insertIDTransTable(struct id_transform_table *table, unsigned short oldID, struct sockaddr_in addr);
 
 struct id_transform_item *deleteIDTransItem(unsigned short newID, struct id_transform_table *table);
 

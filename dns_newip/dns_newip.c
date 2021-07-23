@@ -16,7 +16,7 @@
 #include "dns_table.h"
 #include "dns_transtable.h"
 
-#define DNS_DEFAULT_OUTERADDR "10.3.9.45"
+#define DNS_DEFAULT_OUTERADDR "10.3.9.44"
 #define DNS_LOCALADDR "127.0.0.1"
 #define DNS_PORT 53
 
@@ -24,19 +24,26 @@
 
 #define BUFFER_MAX_SIZE 512
 
+enum WORK_MODE {
+    WORK_MODE_LOCAL = 1,
+    WORK_MODE_REMOTE_SEND = 2,
+    WORK_MODE_REMOTE_RECV = 3
+};
 
-bool checkargv(int argc, char *argv[], char *dnsFilePath, char *outerDNS);
+bool checkargv(int argc, char *argv[], char **dnsFilePath, char **outerDNS);
 
 void configSockAddr(struct sockaddr_in *name, char *addr);
 
 int checkfdSet(int localSerSocket, int remoteSerSocket, fd_set *fdSet, struct timeval *timeout);
+
+void displayInfo(enum WORK_MODE mode, struct dns_table_item *dnsItem, struct id_transform_item *transItem);
 
 int main(int argc, char *argv[]) {
 
     printf("******************DNS: Progrm Start******************\n");
     char *dnsFilePath = DNS_DEFAULT_FILE;
     char *outerDNS = DNS_DEFAULT_OUTERADDR;
-    if (!checkargv(argc, argv, dnsFilePath, outerDNS)) {
+    if (!checkargv(argc, argv, &dnsFilePath, &outerDNS)) {
         printf("****************DNS: Arg Format Error****************\n");
         return 1;
     }
@@ -93,8 +100,10 @@ int main(int argc, char *argv[]) {
                     // not in dns table
                     unsigned short oldID;
                     memcpy(&oldID, recvBuf, sizeof(unsigned short));
-                    unsigned short newID = htons(insertIDTransTable(idTransTable, ntohs(oldID), clientName, currentDomain));
+                    struct id_transform_item *item = insertIDTransTable(idTransTable, ntohs(oldID), clientName);
+                    unsigned short newID = htons(item->newID);
                     memcpy(recvBuf, &newID, sizeof(unsigned short));
+                    displayInfo(WORK_MODE_REMOTE_SEND, NULL, item);
 
                     int send = sendto(remoteSerSocket, recvBuf, recvNum, 0,
                                        (struct sockaddr *) &remoteSerName, sizeof(remoteSerName));
@@ -113,19 +122,23 @@ int main(int argc, char *argv[]) {
                         editDnsMessageAnswerRRs(sendBuf, 0x0001);
                         sendNum = addDNSMessageAnswer(sendBuf, sendNum, findItem);
                     }
+                    displayInfo(WORK_MODE_LOCAL, findItem, NULL);
+
                     int send = sendto(localSerSocket, sendBuf, sendNum, 0,
                                        (struct sockaddr *) &clientName, sizeof(clientName));
 
                     if (send == -1) {
                         printf("WARNS: Sendto Failed: %s(errno: %d)\n", strerror(errno), errno);
                     }
+
+
                 }
             }
         }
 
         if (FD_ISSET(remoteSerSocket, &fdSet)) {
             int recvNum = recvfrom(remoteSerSocket, recvBuf, sizeof(recvBuf), 0,
-                                  (struct sockaddr *) &remoteSerSocket, &addrLength);
+                                  (struct sockaddr *) &remoteSerName, &addrLength);
             if (recvNum == -1) {
                 printf("WARNS: RecvFrom Failed: %s(errno: %d)\n", strerror(errno), errno);
             } else if (recvNum == 0) {
@@ -134,7 +147,9 @@ int main(int argc, char *argv[]) {
                 memcpy(&recvID, recvBuf, sizeof(unsigned short));
                 unsigned short newID = htons(recvID);
                 struct id_transform_item *item = deleteIDTransItem(newID, idTransTable);
-                memcpy(recvBuf, &(item->oldID), 2);
+                unsigned short oldID = htons(item->oldID);
+                memcpy(recvBuf, &oldID, 2);
+                displayInfo(WORK_MODE_REMOTE_RECV, NULL, item);
                 clientName = item->client;
                 int send = sendto(localSerSocket, recvBuf, recvNum, 0,
                            (struct sockaddr *) &clientName, sizeof(clientName));
@@ -168,18 +183,45 @@ void configSockAddr(struct sockaddr_in *name, char *addr) {
     name->sin_addr.s_addr = inet_addr(addr);
 }
 
-bool checkargv(int argc, char *argv[], char *dnsFilePath, char *outerDNS) {
+bool checkargv(int argc, char *argv[], char **dnsFilePath, char **outerDNS) {
     if (argc == 1) {
-        printf("STATE: Use Default Remote Server: %s\n", outerDNS);
-        printf("STATE: Use Default DNS File: %s\n", dnsFilePath);
+        printf("STATE: Use Default Remote Server: %s\n", *outerDNS);
+        printf("STATE: Use Default DNS File: %s\n", *dnsFilePath);
         return true;
     } else if (argc == 3) {
-        outerDNS = argv[1];
-        dnsFilePath = argv[2];
-        printf("STATE: Use Custom Remote Server: %s\n", outerDNS);
-        printf("STATE: Use Custom DNS File: %s\n", dnsFilePath);
+        *outerDNS = argv[1];
+        *dnsFilePath = argv[2];
+        printf("STATE: Use Custom Remote Server: %s\n", *outerDNS);
+        printf("STATE: Use Custom DNS File: %s\n", *dnsFilePath);
         return true;
     } else {
         return false;
     }
+}
+
+void displayInfo(enum WORK_MODE mode, struct dns_table_item *dnsItem, struct id_transform_item *transItem) {
+    putchar('\n');
+    if (mode == WORK_MODE_LOCAL) {
+        printf("STATE: Mode: WORK_MODE_LOCAL\n");
+        printf("INFO : Domain: %s\n", dnsItem->domain);
+        printf("INFO : Type: %s\n", convertTypeToDescription(dnsItem->type));
+        printf("INFO : RData:");
+        for (size_t i = 0; i < convertTypeToRDLen(dnsItem->type); i++) {
+            printf(" %x", dnsItem->rdata[i]);
+        }
+        printf("\n");
+        return;
+    }
+
+    if (mode == WORK_MODE_REMOTE_RECV) {
+        printf("STATE: Mode: WORK_MODE_REMOTE_RECV\n");
+    }
+
+    if (mode == WORK_MODE_REMOTE_SEND) {
+        printf("STATE: Mode: WORK_MODE_REMOTE_SEND\n");
+    }
+
+    printf("INFO : OldID: %d\n", transItem->oldID);
+    printf("INFO : NewID: %d\n", transItem->newID);
+    return;
 }

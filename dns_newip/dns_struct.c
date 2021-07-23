@@ -47,7 +47,7 @@ void resolveRecv(char *recvBuf, int recvNum, char *domain, unsigned short *qclas
 }
 
 unsigned short convertTypeToRDLen(enum ANSWER_TYPE type) {
-    unsigned short len = ANSWER_RDLENGTH_A;
+    unsigned short len = ANSWER_RDLENGTH_NULL;
     switch (type) {
         case ANSWER_TYPE_A:
             len = ANSWER_RDLENGTH_A;
@@ -62,4 +62,17 @@ unsigned short convertTypeToRDLen(enum ANSWER_TYPE type) {
             break;
     }
     return len;
+}
+
+char *convertTypeToDescription(enum ANSWER_TYPE type) {
+    switch (type) {
+        case ANSWER_TYPE_A:
+            return "A";
+        case ANSWER_TYPE_AAAA:
+            return "AAAA";
+        case ANSWER_TYPE_NIP:
+            return "NIP";
+        default:
+            return "NULL";
+    }
 }

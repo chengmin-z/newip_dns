@@ -28,7 +28,11 @@ struct id_transform_item *deleteIDTransItem(unsigned short newID, struct id_tran
     return resItem;
 }
 
-unsigned short insertIDTransTable(struct id_transform_table *table, unsigned short oldID, struct sockaddr_in addr, char *domain) {
+struct id_transform_item *insertIDTransTable(struct id_transform_table *table, unsigned short oldID, struct sockaddr_in addr) {
+    if (table == NULL) {
+        return NULL;
+    }
+
     struct id_transform_item *item = malloc(sizeof(struct id_transform_item));
     item->client = addr;
     item->oldID = oldID;
@@ -46,7 +50,7 @@ unsigned short insertIDTransTable(struct id_transform_table *table, unsigned sho
     table->newID += 1;
     table->size += 1;
 
-    return item->newID;
+    return item;
 }
 
 struct id_transform_table *initIDTransTable() {
